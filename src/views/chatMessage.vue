@@ -8,6 +8,7 @@ import {
   watch,
 } from "vue";
 import { ElMessage } from "element-plus";
+import MarkdownIt from "markdown-it";
 import {
   CopyDocument,
   EditPen,
@@ -28,6 +29,58 @@ const sessionStore = useSessionStore();
 const msg = ref("");
 const isTyping = ref(false);
 const showNewMessageIndicator = ref(false);
+
+const markdown = new MarkdownIt({
+  html: false,
+  linkify: true,
+  breaks: true,
+});
+
+markdown.validateLink = (url) => {
+  const value = String(url || "").trim();
+  if (!value) return false;
+  if (
+    value.startsWith("#") ||
+    value.startsWith("/") ||
+    value.startsWith("./") ||
+    value.startsWith("../")
+  ) {
+    return true;
+  }
+  try {
+    const parsed = new URL(value);
+    return (
+      parsed.protocol === "http:" ||
+      parsed.protocol === "https:" ||
+      parsed.protocol === "mailto:"
+    );
+  } catch {
+    return false;
+  }
+};
+
+const defaultLinkOpen =
+  markdown.renderer.rules.link_open ||
+  ((tokens, idx, options, env, self) => self.renderToken(tokens, idx, options));
+
+markdown.renderer.rules.link_open = (tokens, idx, options, env, self) => {
+  const token = tokens[idx];
+  const href = token.attrGet("href") || "";
+  const isExternal =
+    href.startsWith("http://") ||
+    href.startsWith("https://") ||
+    href.startsWith("mailto:");
+
+  if (isExternal) {
+    token.attrSet("target", "_blank");
+    token.attrSet("rel", "noopener noreferrer");
+  }
+  return defaultLinkOpen(tokens, idx, options, env, self);
+};
+
+const renderMarkdown = (text) => {
+  return markdown.render(String(text ?? ""));
+};
 
 // 模型选择（你可以固定一个，或者保留选择逻辑）
 const selectedModel = computed({
@@ -370,7 +423,12 @@ const scrollToBottomOnClick = async () => {
               </div>
             </div>
 
-            <div class="message-body">{{ item.content }}</div>
+            <div
+              v-if="item.role === 'assistant'"
+              class="message-body markdown-body"
+              v-html="renderMarkdown(item.content)"
+            ></div>
+            <div v-else class="message-body plain-body">{{ item.content }}</div>
           </div>
         </div>
       </DynamicScrollerItem>
@@ -423,7 +481,7 @@ const scrollToBottomOnClick = async () => {
   overflow-y: auto;
   overflow-anchor: none;
   background: var(--color-panel-alt);
-  padding: 24px 10%;
+  padding: 24px 10% 140px;
 }
 
 .message-row {
@@ -450,16 +508,18 @@ const scrollToBottomOnClick = async () => {
   border-radius: 12px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  box-shadow: var(--shadow-soft);
 }
 
 .message.user-message {
-  background: #e6f7ff;
-  border-color: #91d5ff;
+  background: var(--color-bubble-user);
+  border-color: var(--color-bubble-user-border);
+  color: var(--color-bubble-user-text);
 }
 
 .message.assistant-message {
-  background: #ffffff;
+  background: var(--color-elevated-surface);
+  color: var(--color-text-primary);
 }
 
 .message-header {
@@ -468,7 +528,7 @@ const scrollToBottomOnClick = async () => {
   align-items: center;
   margin-bottom: 8px;
   font-size: 12px;
-  color: #888;
+  color: var(--color-muted);
 }
 
 .message-actions {
@@ -486,19 +546,96 @@ const scrollToBottomOnClick = async () => {
   border: none;
   background: transparent;
   cursor: pointer;
-  color: #999;
+  color: var(--color-toolbar-muted);
   padding: 2px;
 }
 
 .action-btn:hover {
-  color: #409eff;
+  color: var(--color-accent);
 }
 
 .message-body {
   font-size: 14px;
   line-height: 1.6;
-  white-space: pre-wrap;
   word-break: break-all;
+  color: inherit;
+}
+
+.plain-body {
+  white-space: pre-wrap;
+}
+
+:deep(.markdown-body) {
+  white-space: normal;
+  color: inherit;
+}
+
+:deep(.markdown-body p) {
+  margin: 8px 0;
+}
+
+:deep(.markdown-body h1),
+:deep(.markdown-body h2),
+:deep(.markdown-body h3) {
+  margin: 12px 0 8px;
+  line-height: 1.25;
+}
+
+:deep(.markdown-body h1) {
+  font-size: 18px;
+}
+
+:deep(.markdown-body h2) {
+  font-size: 16px;
+}
+
+:deep(.markdown-body h3) {
+  font-size: 15px;
+}
+
+:deep(.markdown-body ul),
+:deep(.markdown-body ol) {
+  margin: 8px 0;
+  padding-left: 20px;
+}
+
+:deep(.markdown-body code) {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+  font-size: 13px;
+  background: rgba(15, 23, 42, 0.06);
+  border-radius: 6px;
+  padding: 2px 6px;
+}
+
+:deep(.markdown-body pre) {
+  margin: 10px 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  overflow: auto;
+  background: rgba(15, 23, 42, 0.06);
+}
+
+:deep(.markdown-body pre code) {
+  background: transparent;
+  padding: 0;
+}
+
+:deep(.markdown-body blockquote) {
+  margin: 10px 0;
+  padding: 0 0 0 12px;
+  border-left: 3px solid rgba(59, 130, 246, 0.6);
+  color: rgba(15, 23, 42, 0.75);
+}
+
+:deep(.markdown-body a) {
+  color: var(--color-link);
+  text-decoration: none;
+}
+
+:deep(.markdown-body a:hover) {
+  color: var(--color-link-hover);
+  text-decoration: underline;
 }
 
 .new-message-indicator {

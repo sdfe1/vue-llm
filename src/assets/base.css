@@ -51,6 +51,7 @@
   --color-scroll-thumb-hover: rgba(100, 116, 139, 0.5);
   --color-bubble-user: linear-gradient(135deg, #3b82f6, #2563eb);
   --color-bubble-user-border: rgba(37, 99, 235, 0.45);
+  --color-bubble-user-text: #f8fafc;
   --color-stop-button-bg: rgba(239, 68, 68, 0.16);
   --color-stop-button-shadow: rgba(239, 68, 68, 0.24);
   --color-stop-button-text: #dc2626;
@@ -99,8 +100,9 @@
   --color-scroll-track: rgba(15, 23, 42, 0.6);
   --color-scroll-thumb: rgba(148, 163, 184, 0.45);
   --color-scroll-thumb-hover: rgba(148, 163, 184, 0.65);
-  --color-bubble-user: linear-gradient(135deg, rgba(99, 102, 241, 0.95), rgba(59, 130, 246, 0.95));
-  --color-bubble-user-border: rgba(96, 165, 250, 0.5);
+  --color-bubble-user: rgba(30, 41, 59, 0.92);
+  --color-bubble-user-border: rgba(148, 163, 184, 0.35);
+  --color-bubble-user-text: #e2e8f0;
   --color-stop-button-bg: rgba(248, 113, 113, 0.2);
   --color-stop-button-shadow: rgba(248, 113, 113, 0.32);
   --color-stop-button-text: #fecaca;
