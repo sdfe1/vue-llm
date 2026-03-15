@@ -1,5 +1,3 @@
-import { ElMessage } from "element-plus";
-
 const BASE_URL = "https://api.deepseek.com/v1";
 let currentAbortController = null;
 
@@ -17,6 +15,11 @@ export async function chatStream(
 
   try {
     const apiKey = (import.meta.env?.VITE_DEEPSEEK_API_KEY ?? "").trim();
+    if (!apiKey) {
+      throw new Error(
+        "未配置 DeepSeek API Key，请在 .env.local 中设置 VITE_DEEPSEEK_API_KEY",
+      );
+    }
     
     // 2. 发起 Fetch 请求 
     const response = await fetch(`${BASE_URL}/chat/completions`, {
@@ -92,7 +95,6 @@ export async function chatStream(
     if (error.name === "AbortError") {
       onDone?.(); // 用户手动停止
     } else {
-      ElMessage.error(error.message || "网络异常");
       throw error;
     }
   } finally {

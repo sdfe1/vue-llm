@@ -7,6 +7,7 @@ import {
   ref,
   watch,
 } from "vue";
+import { ElMessage } from "element-plus";
 import {
   CopyDocument,
   EditPen,
@@ -173,9 +174,11 @@ const submit = async () => {
       null, // 不需要 reasoning
       selectedModel.value
     );
-  } catch {
+  } catch (error) {
     isTyping.value = false;
-    aiMessage.content = "抱歉，请求出错，请重试。";
+    pendingDeltas.value = "";
+    sessionStore.adddelta("抱歉，请求出错，请重试。");
+    ElMessage.error(error?.message || "请求失败");
     flushBuffer();
   }
 };
